@@ -19,7 +19,7 @@ router.post('/getAvailableSlots', async (req, res) => {
 
         // Check if the doctor works on the selected date (must match one of workingDays)
         const selectedDate = new Date(date); // Ensure this is the local date
-        const dayOfWeek = selectedDate.getDay();
+        const dayOfWeek = ((selectedDate.getDay())+1)%7;
         if (!workingHours.workingDays.includes(dayOfWeek.toString())) {
           console.log(dayOfWeek.toString())
           console.log("Doctor is not available on this day" );
