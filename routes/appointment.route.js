@@ -150,6 +150,7 @@ router.post('/bookAppointment', async (req, res) => {
 
       // Add notification for the doctor
       const doctorNotification = new Notification({
+        user:doctorId,
         type: 'appointment',
         message: `You have a new appointment request from a ${p.username}.`,
         onClickPath: `/appointments/${newAppointment._id}`, // Notification path for doctor
@@ -166,6 +167,7 @@ router.post('/bookAppointment', async (req, res) => {
 
       // Add notification for the patient (submitted request)
       const patientNotification = new Notification({
+        user:patientId,
         type: 'submitted-request',
         message: `Your appointment request with Dr. ${doctor.doctorProfile.firstname} has been successfully submitted.`,
         onClickPath: `/appointments/${newAppointment._id}`, // Notification path for patient
