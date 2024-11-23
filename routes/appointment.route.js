@@ -24,7 +24,8 @@ router.post('/getAvailableSlots', async (req, res) => {
           console.log(dayOfWeek.toString())
           console.log("Doctor is not available on this day" );
             return res.status(404).json({ message: "Doctor is not available on this day" });
-        }
+        } console.log(dayOfWeek.toString())
+        console.log("Doctor is not available on this day" );
 
         // Find all appointments for the given doctor on the selected date
         // Adjust the selectedDate for the day range (start and end of the day)
