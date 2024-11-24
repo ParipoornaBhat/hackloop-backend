@@ -45,21 +45,24 @@ router.post('/apply', async (req, res) => {
         }
 
         // Create a notification for admin users
-        const adminNotification = new Notification({
-            type: 'request',
-            message: `${updatedUser.doctorProfile.firstname} ${updatedUser.doctorProfile.lastname} has applied for a doctor account.`,
-            data: updatedUser.doctorProfile,
-            onClickPath: "/admin/update-role2", // Update path if needed
-            seen: false // Initially, set as not seen
-        });
+        
 
         // Save the notification to the database
-        await adminNotification.save();
+        
 
         // Notify admins about the new doctor application by adding the notification reference
         const adminUsers = await userModel.find({ role: roles.admin });
 
         for (let adminuser of adminUsers) {
+            const adminNotification = new Notification({
+                user:adminuser._id,
+                type: 'request',
+                message: `${updatedUser.doctorProfile.firstname} ${updatedUser.doctorProfile.lastname} has applied for a doctor account.`,
+                data: updatedUser.doctorProfile,
+                onClickPath: "/admin/update-role2", // Update path if needed
+                seen: false // Initially, set as not seen
+            });
+            await adminNotification.save();
             adminuser.notifications.push(adminNotification._id); // Add the notification reference to the admin's notifications array
             await adminuser.save(); // Save the updated admin user
         }
@@ -67,6 +70,7 @@ router.post('/apply', async (req, res) => {
         // Create a notification for the doctor
         const doctorNotification = new Notification({
             type: 'submitted-request',
+            user:id,
             message: "Your doctor application has been successfully submitted. We will notify you once it's reviewed.",
             data: updatedUser.doctorProfile,
             onClickPath: "/manageuser", // Link to the doctor's profile (could be a status page)
