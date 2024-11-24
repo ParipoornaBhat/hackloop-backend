@@ -340,7 +340,7 @@ router.get('/appointments', async (req, res) => {
   try {
     // Fetch all appointments from database
     const appointments = await Appointment.find()
-      .populate('patient doctor', 'username role')  // Populate patient and doctor info
+      .populate('patient doctor', 'username role doctorProfile')  // Populate patient and doctor info
       .populate('timeSlot')
       .exec();
     res.json(appointments);

@@ -73,7 +73,7 @@ router.post('/apply', async (req, res) => {
             user:id,
             message: "Your doctor application has been successfully submitted. We will notify you once it's reviewed.",
             data: updatedUser.doctorProfile,
-            onClickPath: "/apply", // Link to the doctor's profile (could be a status page)
+            onClickPath: `/doctor/${id}`, // Link to the doctor's profile (could be a status page)
             seen: false // Initially, set as not seen
         });
 
