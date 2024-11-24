@@ -59,7 +59,7 @@ router.post('/apply', async (req, res) => {
                 type: 'request',
                 message: `${updatedUser.doctorProfile.firstname} ${updatedUser.doctorProfile.lastname} has applied for a doctor account.`,
                 data: updatedUser.doctorProfile,
-                onClickPath: "/admin/update-role2", // Update path if needed
+                onClickPath: "/user/manage", // Update path if needed
                 seen: false // Initially, set as not seen
             });
             await adminNotification.save();
@@ -73,7 +73,7 @@ router.post('/apply', async (req, res) => {
             user:id,
             message: "Your doctor application has been successfully submitted. We will notify you once it's reviewed.",
             data: updatedUser.doctorProfile,
-            onClickPath: "/manageuser", // Link to the doctor's profile (could be a status page)
+            onClickPath: "/apply", // Link to the doctor's profile (could be a status page)
             seen: false // Initially, set as not seen
         });
 
