@@ -387,7 +387,8 @@ router.post('/completeAppointment', async (req, res) => {
       patient: patientId,
       doctor: doctorId,
       medication,
-      diagnosis: req.body.diagnosis,  // Add diagnosis if provided
+      diagnosis: req.body.diagnosis, 
+       // Add diagnosis if provided
       appointment: apid,
     });
 
@@ -396,7 +397,7 @@ router.post('/completeAppointment', async (req, res) => {
     // Update the appointment with the prescription
     const appointment = await Appointment.findByIdAndUpdate(
       apid,
-      { status: 'completed', prescription: savedPrescription._id },
+      { status: 'completed', previousPrescriptions: savedPrescription._id },
       { new: true }
     );
 
@@ -444,6 +445,7 @@ router.post('/prescriptions', async (req, res) => {
     const prescriptions = await Prescription.find({ patient: userId })
       .populate('doctor', '_id doctorProfile.firstname doctorProfile.lastname doctorProfile.specialization doctorProfile.experience')  // Populate doctor details
       .populate('appointment', 'appointmentDate timeSlot')  // Populate appointment details
+      .populate('previousPrescriptions')  // Populate appointment details
       .exec();
 
     // Return the prescriptions to the client
