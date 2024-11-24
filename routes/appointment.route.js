@@ -193,7 +193,7 @@ router.post('/bookAppointment', async (req, res) => {
 router.post('/dappointment', async (req, res) => {
     try {
       const { apid } = req.body;  // Extract apid from the request body
-  console.log(apid)
+ 
       // Find the appointment by its ID and populate patient and doctor details fully
       const appointment = await Appointment.findById(apid)
         .populate('patient')  // Populate patient with all fields
@@ -225,8 +225,10 @@ router.post('/appointments/:apid/confirm', async (req, res) => {
     await appointment.save();
 
     // Create a notification for the patient
+    const doctor = await User.findById(appointment.doctor);
+
     const patient = await User.findById(appointment.patient);
-    const notificationMessage = `Your appointment with Dr. ${appointment.doctor.doctorProfile.firstname} ${appointment.doctor.doctorProfile.lastname} has been confirmed.`;
+    const notificationMessage = `Your appointment with Dr. ${doctor.doctorProfile.firstname} ${doctor.doctorProfile.lastname} has been confirmed.`;
 
     const patientNotification = await Notification.create({
       user: patient._id,
@@ -241,7 +243,6 @@ router.post('/appointments/:apid/confirm', async (req, res) => {
     await patient.save();
 
     // Optionally, create a notification for the doctor
-    const doctor = await User.findById(appointment.doctor);
     const doctorNotificationMessage = `You have confirmed an appointment with ${patient.username}.`;
 
     const doctorNotification = await Notification.create({
@@ -256,7 +257,7 @@ router.post('/appointments/:apid/confirm', async (req, res) => {
     doctor.notifications.push(doctorNotification._id);
     await doctor.save();
 
-    res.status(200).json({ message: 'Appointment confirmed and notifications sent.' });
+    res.status(200).json({ success: true, message: 'Appointment confirmed and notifications sent.' });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error' });
@@ -318,6 +319,43 @@ router.post('/appointments/:apid/cancel', async (req, res) => {
   }
 });
 
+router.get('/appointments', async (req, res) => {
+  try {
+    // Fetch all appointments from database
+    const appointments = await Appointment.find()
+      .populate('patient doctor', 'username role')  // Populate patient and doctor info
+      .populate('timeSlot')
+      .exec();
+    res.json(appointments);
+  } catch (err) {
+    res.status(500).json({ message: 'Error fetching appointments' });
+  }
+});
+router.post('/appointments/:apid/delete', async (req, res) => {
+  const { apid } = req.params;
+
+  try {
+    const appointment = await Appointment.findById(apid);
+    if (!appointment) {
+      return res.status(404).json({ message: 'Appointment not found' });
+    }
+
+    // Delete the appointment
+    await appointment.remove();
+
+    // Remove appointment from user schema
+    const patient = await User.findById(appointment.patient);
+    const doctor = await User.findById(appointment.doctor);
+    patient.appointments = patient.appointments.filter(id => id.toString() !== apid);
+    doctor.appointments = doctor.appointments.filter(id => id.toString() !== apid);
+    await patient.save();
+    await doctor.save();
+
+    res.status(200).json({ message: 'Appointment deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to delete appointment' });
+  }
+});
 
 // Export the routes
 module.exports = router;
