@@ -61,5 +61,6 @@ const userSchema = new mongoose.Schema({
 }, {
   timestamps: true,
 });
+userSchema.set('strictPopulate', false);
 
 module.exports = mongoose.model('User', userSchema);
