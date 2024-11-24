@@ -425,6 +425,35 @@ router.post('/completeAppointment', async (req, res) => {
   }
 });
 
+router.post('/prescriptions', async (req, res) => {
+  try {
+    const { userId } = req.body;
+
+    // Validate that the userId is provided
+    if (!userId) {
+      return res.status(400).json({ message: 'User ID is required.' });
+    }
+
+    // Find the user by ID to ensure the user exists
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
+
+    // Fetch prescriptions for the user, including appointment and doctor details
+    const prescriptions = await Prescription.find({ patient: userId })
+      .populate('doctor', '_id doctorProfile.firstname doctorProfile.lastname doctorProfile.specialization doctorProfile.experience')  // Populate doctor details
+      .populate('appointment', 'appointmentDate timeSlot')  // Populate appointment details
+      .exec();
+
+    // Return the prescriptions to the client
+    res.json(prescriptions);
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Failed to fetch prescriptions', error: error.message });
+  }
+});
 
 // Export the routes
 module.exports = router;
