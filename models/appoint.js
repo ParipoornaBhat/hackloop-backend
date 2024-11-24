@@ -17,9 +17,15 @@ const appointmentSchema = new mongoose.Schema({
     enum: ['requested', 'confirmed', 'completed', 'cancelled'],
     default: 'requested',
   },
+  previousPrescriptions: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Prescription',  // This stores the patient's previous prescriptions at the time of the appointment
+  }],
+  prescription: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Prescription',  // The new prescription issued after the appointment
+    default: null,  // It can be null if no prescription is issued
+  },
 });
-
-
-
 
 module.exports = mongoose.model('Appointment', appointmentSchema);

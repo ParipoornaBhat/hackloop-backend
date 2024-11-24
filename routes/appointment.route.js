@@ -3,6 +3,8 @@ const router = express.Router();
 const Appointment = require('../models/appoint');
 const User = require('../models/user');
 const Notification = require('../models/notification');
+const Prescription = require('../models/prescription');
+
 
 router.post('/getAvailableSlots', async (req, res) => {
     const { doctorId, date } = req.body;
@@ -126,57 +128,65 @@ function generateAvailableSlots(workingHours, existingAppointments, date) {
 
 
 router.post('/bookAppointment', async (req, res) => {
-    const { patientId, doctorId, appointmentDate, timeSlot, description } = req.body;
+  const { patientId, doctorId, appointmentDate, timeSlot, description } = req.body;
 
-    try {
+  try {
       // Make sure timeSlot is an object with the required fields
       if (!timeSlot || !timeSlot.time || !timeSlot.startTime || !timeSlot.endTime || timeSlot.available === undefined) {
-        return res.status(400).json({ success: false, message: 'Invalid timeSlot data' });
+          return res.status(400).json({ success: false, message: 'Invalid timeSlot data' });
       }
 
       // Create a new appointment
       const newAppointment = new Appointment({
-        patient: patientId,
-        doctor: doctorId,
-        appointmentDate,
-        timeSlot,
-        description,
+          patient: patientId,
+          doctor: doctorId,
+          appointmentDate,
+          timeSlot,
+          description,
       });
 
-      // Save the appointment
-      await newAppointment.save();
+      // Fetch the patient's existing prescriptions
+      const patient = await User.findById(patientId).populate('prescriptions');
+      const existingPrescriptions = patient.prescriptions;
 
-      const p = await User.findById(patientId);
+      // If the patient has any previous prescriptions, link them to the new appointment
+      if (existingPrescriptions && existingPrescriptions.length > 0) {
+          newAppointment.previousPrescriptions = existingPrescriptions.map(prescription => prescription._id);
+      }
+
+      // Save the new appointment
+      await newAppointment.save();
 
       // Add notification for the doctor
       const doctorNotification = new Notification({
-        user:doctorId,
-        type: 'appointment',
-        message: `You have a new appointment request from a ${p.username}.`,
-        onClickPath: `/appointments/${newAppointment._id}`, // Notification path for doctor
+          user: doctorId,
+          type: 'appointment',
+          message: `You have a new appointment request from ${patient.username}.`,
+          onClickPath: `/appointments/${newAppointment._id}`, // Notification path for doctor
       });
       await doctorNotification.save();
 
       // Add the notification to the doctor's notifications
-      const doctor = await User.findById(doctorId);
-      doctor.notifications.push(doctorNotification._id);
+      const doctorUser = await User.findById(doctorId);
+      doctorUser.notifications.push(doctorNotification._id);
+      await doctorUser.save();
 
       // Add the new appointment reference to the doctor's appointments array
-      doctor.appointments.push(newAppointment._id);
-      await doctor.save();
+      doctorUser.appointments.push(newAppointment._id);
+      await doctorUser.save();
 
       // Add notification for the patient (submitted request)
       const patientNotification = new Notification({
-        user:patientId,
-        type: 'submitted-request',
-        message: `Your appointment request with Dr. ${doctor.doctorProfile.firstname} has been successfully submitted.`,
-        onClickPath: `/appointments/${newAppointment._id}`, // Notification path for patient
+          user: patientId,
+          type: 'submitted-request',
+          message: `Your appointment request with Dr. ${doctorUser.doctorProfile.firstname} has been successfully submitted.`,
+          onClickPath: `/appointments/${newAppointment._id}`, // Notification path for patient
       });
       await patientNotification.save();
 
       // Add the notification to the patient's notifications
-      const patient = await User.findById(patientId);
       patient.notifications.push(patientNotification._id);
+      await patient.save();
 
       // Add the new appointment reference to the patient's appointments array
       patient.appointments.push(newAppointment._id);
@@ -184,30 +194,37 @@ router.post('/bookAppointment', async (req, res) => {
 
       // Respond with success
       res.json({ success: true, message: 'Appointment booked successfully!' });
-    } catch (error) {
+  } catch (error) {
       console.error(error);
       res.status(500).json({ success: false, message: 'Failed to book appointment' });
-    }
+  }
 });
 
+
+
 router.post('/dappointment', async (req, res) => {
-    try {
-      const { apid } = req.body;  // Extract apid from the request body
- 
-      // Find the appointment by its ID and populate patient and doctor details fully
-      const appointment = await Appointment.findById(apid)
-        .populate('patient')  // Populate patient with all fields
-        .populate('doctor');   // Populate doctor with all fields
-      if (!appointment) {
-        return res.status(404).json({ error: 'Appointment not found' });
-      }
-  
-      // Send the full appointment object as the response
-      res.json(appointment);
-    } catch (err) {
-      res.status(500).json({ error: 'Failed to fetch appointment details', message: err.message });
+  try {
+    const { apid } = req.body;  // Extract apid from the request body
+
+    // Find the appointment by its ID and populate patient, doctor, previousPrescriptions, and prescription
+    const appointment = await Appointment.findById(apid)
+      .populate('patient')            // Populate patient with all fields
+      .populate('doctor')             // Populate doctor with all fields
+      .populate('previousPrescriptions')  // Populate previous prescriptions
+      .populate('prescription');      // Populate the prescription field
+
+    if (!appointment) {
+      return res.status(404).json({ error: 'Appointment not found' });
     }
-  });
+
+    // Send the full appointment object as the response
+    res.json(appointment);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch appointment details', message: err.message });
+  }
+});
+
+
 
 // Confirm appointment route
 router.post('/appointments/:apid/confirm', async (req, res) => {
@@ -356,6 +373,58 @@ router.post('/appointments/:apid/delete', async (req, res) => {
     res.status(500).json({ message: 'Failed to delete appointment' });
   }
 });
+
+//completion
+
+
+
+router.post('/completeAppointment', async (req, res) => {
+  try {
+    const { apid, medication, doctorId, patientId } = req.body;
+
+    // Create the prescription
+    const newPrescription = new Prescription({
+      patient: patientId,
+      doctor: doctorId,
+      medication,
+      diagnosis: req.body.diagnosis,  // Add diagnosis if provided
+      appointment: apid,
+    });
+
+    const savedPrescription = await newPrescription.save();
+
+    // Update the appointment with the prescription
+    const appointment = await Appointment.findByIdAndUpdate(
+      apid,
+      { status: 'completed', prescription: savedPrescription._id },
+      { new: true }
+    );
+
+    // Update the user (patient) with the prescription reference
+    await User.findByIdAndUpdate(
+      patientId,
+      { $push: { prescription: savedPrescription._id } }, // Add the prescription ID to the user's prescriptions array
+      { new: true }
+    );
+
+    // Create notification for the patient
+    const notification = new Notification({
+      type: 'appointment',
+      message: 'Your appointment is completed, and a prescription has been added.',
+      user: patientId,
+      onClickPath: `/appointments/${apid}`,
+    });
+
+    await notification.save();
+
+    // Send the saved prescription as a response
+    res.status(200).json(savedPrescription);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Error completing appointment and saving prescription' });
+  }
+});
+
 
 // Export the routes
 module.exports = router;

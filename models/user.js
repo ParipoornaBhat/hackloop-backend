@@ -27,8 +27,8 @@ const DocSchema = new mongoose.Schema({
 // Define the User Schema
 const userSchema = new mongoose.Schema({
   username: { type: String },
-  email: { type: String, lowercase: true,  },
-  password: { type: String,  },
+  email: { type: String, lowercase: true },
+  password: { type: String },
   role: {
     type: String,
     enum: [roles.admin, roles.doctor, roles.patient],
@@ -54,13 +54,12 @@ const userSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Appointment'
   }],
-  prescriptions: [{
+  prescription: [{
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Prescription'
+    ref: 'Prescription'  // This stores all prescriptions (current and past)
   }],
 }, {
   timestamps: true,
 });
 
-// Export the User model
 module.exports = mongoose.model('User', userSchema);
