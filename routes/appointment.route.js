@@ -337,18 +337,48 @@ router.post('/appointments/:apid/cancel', async (req, res) => {
   }
 });
 
-router.get('/appointments', async (req, res) => {
+// Assuming User and Appointment models are properly defined
+router.post('/appointments', async (req, res) => {
+  const { id } = req.body;  // Expect the id to come in as part of the request body
+
+  if (!id) {
+    return res.status(400).json({ message: 'User ID is required' }); // Handle missing ID
+  }
+
   try {
-    // Fetch all appointments from database
-    const appointments = await Appointment.find()
-      .populate('patient doctor', 'username role doctorProfile')  // Populate patient and doctor info
-      .populate('timeSlot')
+    // Find the user by _id
+    const user = await User.findById(id)
+      .select('appointments')  // Only fetch the appointments array from the user
+      .populate({
+        path: 'appointments',   // Populate the appointments array
+        populate: [
+          { 
+            path: 'patient doctor', 
+            select: 'username role doctorProfile'  // Populate patient and doctor info
+          },
+          { 
+            path: 'timeSlot', 
+            select: 'startTime endTime'  // Populate timeSlot info (or any relevant fields)
+          }
+        ]
+      })
       .exec();
-    res.json(appointments);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Send back the populated appointments
+    res.status(200).json(user.appointments);
+
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: 'Error fetching appointments' });
   }
 });
+
+
+
 router.post('/appointments/:apid/delete-d', async (req, res) => {
   const { apid } = req.params;
 
@@ -387,7 +417,7 @@ router.post('/appointments/:apid/delete-p', async (req, res) => {
     }
 
     // Use deleteOne() instead of remove()
-    await Appointment.deleteOne({ _id: apid });
+    
 
     // Remove appointment from user schema
     const patient = await User.findById(appointment.patient);
