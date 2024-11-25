@@ -146,8 +146,8 @@ router.post('/bookAppointment', async (req, res) => {
       });
 
       // Fetch the patient's existing prescriptions
-      const patient = await User.findById(patientId).populate('prescriptions');
-      const existingPrescriptions = patient.prescriptions;
+      const patient = await User.findById(patientId).populate('prescription');
+      const existingPrescriptions = patient.prescription;
 
       // If the patient has any previous prescriptions, link them to the new appointment
       if (existingPrescriptions && existingPrescriptions.length > 0) {
@@ -216,10 +216,11 @@ router.post('/dappointment', async (req, res) => {
     if (!appointment) {
       return res.status(404).json({ error: 'Appointment not found' });
     }
-
+    
     // Send the full appointment object as the response
     res.json(appointment);
   } catch (err) {
+    console.log(err)
     res.status(500).json({ error: 'Failed to fetch appointment details', message: err.message });
   }
 });
@@ -397,7 +398,7 @@ router.post('/completeAppointment', async (req, res) => {
     // Update the appointment with the prescription
     const appointment = await Appointment.findByIdAndUpdate(
       apid,
-      { status: 'completed', previousPrescriptions: savedPrescription._id },
+      { status: 'completed', prescription: savedPrescription._id },
       { new: true }
     );
 
@@ -445,7 +446,7 @@ router.post('/prescriptions', async (req, res) => {
     const prescriptions = await Prescription.find({ patient: userId })
       .populate('doctor', '_id doctorProfile.firstname doctorProfile.lastname doctorProfile.specialization doctorProfile.experience')  // Populate doctor details
       .populate('appointment', 'appointmentDate timeSlot')  // Populate appointment details
-      .populate('previousPrescriptions')  // Populate appointment details
+      // Populate appointment details
       .exec();
 
     // Return the prescriptions to the client

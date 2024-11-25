@@ -24,7 +24,7 @@ const appointmentSchema = new mongoose.Schema({
   prescription: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Prescription',  // The new prescription issued after the appointment
-    default: null,  // It can be null if no prescription is issued
+      // It can be null if no prescription is issued
   },
 });
 
