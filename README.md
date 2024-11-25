@@ -25,3 +25,6 @@ PASSWORD: 456456
 All the passwords are encrypted while saving in mongo including these account,,
 
 please note tht the otp feature cant be tested with these credentials as these are the test credential to checkout the features provided
+
+
+The backend uses mongodb, express and nodejs
