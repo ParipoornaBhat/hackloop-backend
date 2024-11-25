@@ -301,7 +301,7 @@ router.post('/appointments/:apid/cancel', async (req, res) => {
     const patient = await User.findById(appointment.patient);
     const doctor = await User.findById(appointment.doctor);
 
-    const notificationMessage = `Your appointment with Dr. ${appointment.doctor.doctorProfile.firstname} ${appointment.doctor.doctorProfile.lastname} has been cancelled.`;
+    const notificationMessage = `Your appointment with Dr. ${doctor.doctorProfile.firstname} ${doctor.doctorProfile.lastname} has been cancelled.`;
 
     const patientNotification = await Notification.create({
       user: patient._id,
@@ -349,7 +349,7 @@ router.get('/appointments', async (req, res) => {
     res.status(500).json({ message: 'Error fetching appointments' });
   }
 });
-router.post('/appointments/:apid/delete', async (req, res) => {
+router.post('/appointments/:apid/delete-d', async (req, res) => {
   const { apid } = req.params;
 
   try {
@@ -358,22 +358,52 @@ router.post('/appointments/:apid/delete', async (req, res) => {
       return res.status(404).json({ message: 'Appointment not found' });
     }
 
-    // Delete the appointment
-    await appointment.remove();
+    // Use deleteOne() instead of remove()
 
     // Remove appointment from user schema
-    const patient = await User.findById(appointment.patient);
     const doctor = await User.findById(appointment.doctor);
-    patient.appointments = patient.appointments.filter(id => id.toString() !== apid);
-    doctor.appointments = doctor.appointments.filter(id => id.toString() !== apid);
-    await patient.save();
-    await doctor.save();
+
+    // Ensure patient and doctor exist before modifying their appointments array
+    
+
+    if (doctor) {
+      doctor.appointments = doctor.appointments.filter(id => id.toString() !== apid);
+      await doctor.save();
+    }
 
     res.status(200).json({ message: 'Appointment deleted successfully' });
   } catch (err) {
+    console.log(err)
     res.status(500).json({ message: 'Failed to delete appointment' });
   }
 });
+router.post('/appointments/:apid/delete-p', async (req, res) => {
+  const { apid } = req.params;
+
+  try {
+    const appointment = await Appointment.findById(apid);
+    if (!appointment) {
+      return res.status(404).json({ message: 'Appointment not found' });
+    }
+
+    // Use deleteOne() instead of remove()
+    await Appointment.deleteOne({ _id: apid });
+
+    // Remove appointment from user schema
+    const patient = await User.findById(appointment.patient);
+
+    // Ensure patient and doctor exist before modifying their appointments array
+    if (patient) {
+      patient.appointments = patient.appointments.filter(id => id.toString() !== apid);
+      await patient.save();
+    }
+   res.status(200).json({ message: 'Appointment deleted successfully' });
+  } catch (err) {
+    console.log(err)
+    res.status(500).json({ message: 'Failed to delete appointment' });
+  }
+});
+
 
 //completion
 
