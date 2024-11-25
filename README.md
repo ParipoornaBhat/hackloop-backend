@@ -1,6 +1,6 @@
 # Hi ,, Judges
 
-i know its a very beginner level project,,
+
 
 sarvam.tech
 (sarvam=Everything)😅
@@ -23,7 +23,7 @@ please note tht the otp feature cant be tested with these credentials as these a
 
 The backend uses mongodb, express and nodejs
 
-
+i know its a very beginner level project,,
 It was really a good expirience as our mentors guided really well douring the process special thanks to nandan pai and omkar prabhu,,
 
 start with ejs and express where front and backend were in same server ,, then i shifted to react to do them in separate servers,,
