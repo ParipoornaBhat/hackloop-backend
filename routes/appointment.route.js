@@ -508,7 +508,6 @@ router.post('/prescriptions', async (req, res) => {
       .populate('appointment', 'appointmentDate timeSlot')  // Populate appointment details
       // Populate appointment details
       .exec();
-
     // Return the prescriptions to the client
     res.json(prescriptions);
 
