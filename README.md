@@ -42,3 +42,10 @@ SIGNING OFF..... ..... ..... -Paripoorna Bhat[Team Lead🙃 of Alpha_coders]
 +MERN Stack developer thanks to hackloop😂
 
 Speacial Thanks to Flc for the 🍪 🍪 🍪
+
+# Also
+see test out by booking atleast 2 appointment so tht ,, the second appointment details is been made such tht it will include all the previously made report of the patient by the doctor in our platforms
+this feature can actually save lives even though a patient history is been followed all accross the system ,, the clinics still lack in these ,, our platforms makes it easier for them .....
+
+[ example,, A doctor lost a patient ,, as patient didnt willing the submit the report of previous doctor with full transparency.
+it might seem to be a simple feature but it is useful one for sure this example is based on true event ]
