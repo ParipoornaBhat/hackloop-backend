@@ -73,6 +73,10 @@ app.use("/api/user", require("./routes/apply.route"));
 app.use("/api/user", require("./routes/notify.route"));
 app.use("/api", require("./routes/doctor.route"));
 app.use("/api", require("./routes/appointment.route"));
+
+
+
+
 app.get("/", (req, res) => {
   res.send("server is running");
 });
