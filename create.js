@@ -57,11 +57,11 @@ async function createUsers() {
       specialization: 'Cardiology',
       experience: 10,
       feeperconsultation: 200,
-      from1: '09:00 AM',
-      to1: '01:00 PM',
-      from2: '02:00 PM',
-      to2: '06:00 PM',
-      workingDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+      from1: '09:00',
+      to1: '13:00 PM',
+      from2: '14:00 PM',
+      to2: '16:00 PM',
+      workingDays: ['1', '2', '3', '6'],
       status: 'active', // You can set to 'active' or 'pending'
     };
     await createUser('doctoruser', 'doctor@example.com', '456456', 'DOCTOR', doctorDetails);
