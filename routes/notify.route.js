@@ -127,21 +127,6 @@ router.get("/notifica/:userId", async (req, res) => {
   const notifications = await Notification.find({ userId, seen: false });
   res.status(200).json(notifications);
 });
-router.post("/subscribe", async (req, res) => {
-  const { subscription, userId } = req.body;
-
-  // Store subscription in DB (replace with actual DB call)
-  const user = await User.findById(userId);
-  if (!user) {
-    return res.status(404).json({ message: "User not found." });
-  }
-  
-  // Save the subscription to user's notifications
-  user.subscription = subscription;  // Make sure to define this field in the User schema
-  await user.save();
-
-  res.status(201).json({ message: "Subscribed for notifications." });
-});
 
 
 module.exports = router;
