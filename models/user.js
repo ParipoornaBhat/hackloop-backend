@@ -1,9 +1,5 @@
 const mongoose = require('mongoose');
 const { roles } = require('../utils/constants');
-const createHttpError = require('http-errors');
-
-// Import the Notification model
-const Notification = require('./notification');
 
 // Define the DocSchema for Doctor Profile
 const DocSchema = new mongoose.Schema({
@@ -58,6 +54,12 @@ const userSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Prescription'  // This stores all prescriptions (current and past)
   }],
+  
+  // New subscription field for storing the user's push subscription data
+  subscription: { 
+    type: Object, 
+    default: {}  // This will store the subscription object from the client-side push notification
+  }
 }, {
   timestamps: true,
 });
