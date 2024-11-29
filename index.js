@@ -22,7 +22,7 @@ if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
 }
 
 webpush.setVapidDetails(
-  "mailto:example@yourdomain.com", // Replace with your email
+  "mailto:project542005@gmail.com", // Replace with your email
   VAPID_PUBLIC_KEY, // Your public key from .env
   VAPID_PRIVATE_KEY // Your private key from .env
 );
