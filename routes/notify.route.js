@@ -55,6 +55,35 @@ router.post("/update-user", async (req, res) => {
 
 
 const Notification = require("../models/notification"); // Import Notification model
+router.post("/update-all-notifications", async (req, res) => {
+  const { userId, notificationIds } = req.body;  // Get the user ID and unseen notification IDs from request body
+
+  try {
+    // Find the user by ID
+    const user = await User.findById(userId);
+    
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Update the unseen notifications to seen by their IDs
+    const updatedNotifications = await Notification.updateMany(
+      { _id: { $in: notificationIds }, seen: false },  // Find all unseen notifications with the provided IDs
+      { $set: { seen: true } }                          // Set their 'seen' status to true
+    );
+
+    // If no notifications were updated
+    if (updatedNotifications.nModified === 0) {
+      return res.status(200).json({ message: "No unseen notifications found" });
+    }
+
+    // Respond with a success message
+    return res.status(200).json({ message: "All notifications marked as seen" });
+  } catch (err) {
+    console.log("Error updating notifications:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
 
 // Route to update a notification's seen status
 router.post("/update-notification", async (req, res) => {

@@ -64,8 +64,11 @@ let userSubscriptions = {};
 // Fetch all unseen notifications for the user
 app.get("/api/notifications", async (req, res) => {
   const userId = req.query.userId;
-  const notifications = await Notification.find({ user: userId, seen: false });
-  res.json(notifications);
+  const notifications = await User.findById(userId).populate({
+    path: 'notifications',  // Assuming 'notifications' is the field with references to the Notification model
+    match: { seen: false },  // Filter only unseen notifications
+    select: ''    });
+    res.json(notifications);
 });
 
 // Store subscription in the backend when the user grants notification permission
