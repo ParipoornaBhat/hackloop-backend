@@ -1,18 +1,18 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
-const User = require('./models/user'); // Assuming the user model is in './models/user'
+const User = require('./models/user'); // Assuming your User model is in './models/user'
 
 // Load environment variables from .env file
 require('dotenv').config();
 
-// MongoDB connection string (make sure this is correct in your .env file or replace directly)
+// MongoDB connection string
 const dbURL = process.env.MONGODB_URI || 'mongodb://localhost:27017/your-database-name';
 
 // Connect to MongoDB
 mongoose.connect(dbURL, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => {
     console.log('Connected to MongoDB');
-    createUsers();
+    createUsers(); // Call the function to create users
   })
   .catch(err => {
     console.error('MongoDB connection error:', err);
@@ -20,7 +20,7 @@ mongoose.connect(dbURL, { useNewUrlParser: true, useUnifiedTopology: true })
   });
 
 // Function to create and hash password for users
-async function createUser(username, email, password, role, doctorDetails = null) {
+async function createUser(username, email, password, role, doctorDetails = {}) {
   try {
     // Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -31,7 +31,7 @@ async function createUser(username, email, password, role, doctorDetails = null)
       email,
       password: hashedPassword, // Store the hashed password
       role,
-      doctorProfile: doctorDetails, // Only populate for doctor role
+      doctorProfile: doctorDetails, // Default to an empty object if not provided
     });
 
     // Save the user to the database
@@ -42,7 +42,7 @@ async function createUser(username, email, password, role, doctorDetails = null)
   }
 }
 
-// Function to create users (admin, doctor, and patient)
+// Function to create admin, doctor, and patient users
 async function createUsers() {
   try {
     // Create an admin user
@@ -58,18 +58,18 @@ async function createUsers() {
       experience: 10,
       feeperconsultation: 200,
       from1: '09:00',
-      to1: '13:00 PM',
-      from2: '14:00 PM',
-      to2: '16:00 PM',
+      to1: '13:00',
+      from2: '14:00',
+      to2: '16:00',
       workingDays: ['1', '2', '3', '6'],
-      status: 'active', // You can set to 'active' or 'pending'
+      status: 'active'
     };
     await createUser('doctoruser', 'doctor@example.com', '456456', 'DOCTOR', doctorDetails);
 
     // Create a patient user
     await createUser('patientuser', 'patient@example.com', '456456', 'PATIENT');
 
-    // Close the MongoDB connection after user creation
+    // Close the MongoDB connection after creating users
     mongoose.connection.close();
   } catch (err) {
     console.error('Error creating users:', err);
