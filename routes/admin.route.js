@@ -28,7 +28,7 @@ router.get('/users', async (req, res, next) => {
     try {
       // Filter users by role 'DOCTOR' and select specific fields (e.g., name and doctorProfile)
       const users = await User.find({ role: 'DOCTOR' })
-                               .select('_id doctorProfile name role');  // Only include necessary fields
+                               .select('_id profilePic doctorProfile name role');  // Only include necessary fields
       res.json(users);  // Send users with role 'DOCTOR' as JSON
     } catch (error) {
       return res.status(400).json({ message: 'Invalid request in get user' });

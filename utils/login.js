@@ -20,8 +20,8 @@ async function login(email, password) {
     const token = generateToken(user);
 
     // Return both token and user object (useful for the frontend to store)
-    return { token, user };
-    
+    return { token, user  };
+  
   } catch (err) {
     console.log(err);
     throw new Error("Error in login");

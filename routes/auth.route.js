@@ -21,6 +21,28 @@ router.use(express.urlencoded({ extended: true })); //2to get data from post
 
 const connectEnsureLogin = require("connect-ensure-login");
 
+const multer = require('multer');
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const cloudinary = require('cloudinary').v2;
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+  });
+  const multerStorageCloudinary = new CloudinaryStorage({
+    cloudinary: cloudinary,
+    params: async (req, file) => ({
+      folder: 'CCProfile',
+      format: file.mimetype.split('/')[1], // Ensures correct format
+      allowed_formats: ['jpg', 'png', 'jpeg'], 
+    }),
+  });
+  
+  // Multer setup
+  const upload = multer({ storage: multerStorageCloudinary });
+
+
+
 const { roles } = require("../utils/constants");
 const ConnectFlash = require("connect-flash");
 router.use(ConnectFlash());
@@ -43,7 +65,21 @@ router.post("/get-form-data", async (req, res, next) => {
  try{
   const { email, password } = req.body;
   const token =await authService.login(email,password)
-  
+  //send otp saying tht logged in
+  const reciever = {
+    from: process.env.EMAIL_USER,
+    to: email,
+    subject: "Logged In",
+    text: `Just informing You that You have logged in to your account`,
+  };
+  transporter.sendMail(reciever, (error, info) => {
+    if (error) {
+      return res
+        .status(500)
+        .json({ success: false, message: `Error Login.${error}` });
+    }
+  });
+
   res.json({token:token});
  }catch(err){
   res.status(401).json({message:"invalid credentials"});
@@ -52,41 +88,42 @@ router.post("/get-form-data", async (req, res, next) => {
 
 
 
-router.post(
-  "/get-form-data-reg",
-  async (req, res) => {
-    try {
-      const { user, email, password } = req.body;
-      const hashedPassword = await bcrypt.hash(password, 10); // Hash the password
-      if (email === process.env.ADMIN_EMAIL) {
-        const newUser = await userModel.create({
-          username: user,
-          email: email,
-          password: hashedPassword,
-          role: roles.admin, // Store the hashed password
-        });
-      } else {
-        const newUser = await userModel.create({
-          username: user,
-          email: email,
-          password: hashedPassword, // Store the hashed password
-        });
-      }
+router.post("/register", upload.single("profilePic"), async (req, res) => {
+  try {
+    const { username, email, password } = req.body;
+    if (!username || !email || !password) {
+      return res.status(400).json({ success: false, message: "All fields are required." });
+    }
 
-      // Respond with a success message
-      res
-        .status(200)
-        .json({ success: true, message: `${user} Registration successful!` });
-    } catch (error) {
-      console.error("Error creating user:", error);
-      // Respond with an error message
-      res.status(400).json({
-        success: false,
-        message: `${user}User registration failed. Please try again.`,
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const profilePicUrl = req.file ? req.file.path : "";
+
+    let newUser;
+
+    if (email === process.env.ADMIN_EMAIL) {
+      newUser = await userModel.create({
+        username,
+        email,
+        password: hashedPassword,
+        role: roles.admin,
+      });
+    } else {
+      newUser = await userModel.create({
+        username,
+        email,
+        password: hashedPassword,
+        profilePic: profilePicUrl,
+        role: roles.user, // Assuming normal users should have a role too
       });
     }
+
+    return res.status(201).json({ success: true, message: `${username}, registration successful!` });
+  } catch (error) {
+    console.error("Error creating user:", error);
+    return res.status(500).json({ success: false, message: "User registration failed. Please try again." });
   }
-);
+});
+
 router.post("/send-otp", async (req, res) => {
   const email = req.body.email;
   // Check if the email is already registered

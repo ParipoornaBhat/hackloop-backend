@@ -23,6 +23,8 @@ const DocSchema = new mongoose.Schema({
 // Define the User Schema
 const userSchema = new mongoose.Schema({
   username: { type: String },
+  profilePic: { type: String, default: '' }, // Default profile picture
+  
   email: { type: String, lowercase: true },
   password: { type: String },
   role: {
