@@ -61,6 +61,10 @@ const transporter = nodemailer.createTransport({
     rejectUnauthorized: false, // Disable SSL certificate validation (unsafe for production)
   },
 });
+
+
+
+
 router.post("/get-form-data", async (req, res, next) => {
  try{
   const { email, password } = req.body;
@@ -134,7 +138,8 @@ router.post("/send-otp", async (req, res) => {
       .json({ success: false, message: "Email already registered." });
   }
 
-  currentOtp = Math.floor(1000 + Math.random() * 9000).toString(); // Generate a random 4-digit OTP
+  // Generate a random 4-digit OTP
+  const currentOtp = Math.floor(Math.random() * 9999 + 1).toString().padStart(4, '0');
 
   const reciever = {
     from: process.env.EMAIL_USER,

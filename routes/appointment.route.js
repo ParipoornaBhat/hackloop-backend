@@ -4,7 +4,19 @@ const Appointment = require('../models/appoint');
 const User = require('../models/user');
 const Notification = require('../models/notification');
 const Prescription = require('../models/prescription');
-
+const nodemailer = require("nodemailer");
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  secure: true,
+  port: 465,
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+  tls: {
+    rejectUnauthorized: false, // Disable SSL certificate validation (unsafe for production)
+  },
+});
 
 router.post('/getAvailableSlots', async (req, res) => {
     const { doctorId, date } = req.body;
@@ -176,6 +188,7 @@ router.post('/bookAppointment', async (req, res) => {
       await doctorUser.save();
 
       // Add notification for the patient (submitted request)
+      
       const patientNotification = new Notification({
           user: patientId,
           type: 'submitted-request',
@@ -193,6 +206,19 @@ router.post('/bookAppointment', async (req, res) => {
       await patient.save();
 
       // Respond with success
+      const recieverd = {
+        from: process.env.EMAIL_USER,
+        to: doctorUser.email,
+        subject: "Logged In",
+        text: `You have a new appointment request from ${patient.username}.`,
+      };
+      transporter.sendMail(recieverd, (error, info) => {
+        if (error) {
+          return res
+            .status(500)
+            .json({ success: false, message: `Error Login.${error}` });
+        }
+      });
       res.json({ success: true, message: 'Appointment booked successfully!' });
   } catch (error) {
       console.error(error);
@@ -255,7 +281,19 @@ router.post('/appointments/:apid/confirm', async (req, res) => {
       seen: false,
       onClickPath: `/appointments/${apid}`,
     });
-
+    const recieverp = {
+      from: process.env.EMAIL_USER,
+      to: patient.email,
+      subject: "Patient appointment Confirmation",
+      text: `Just informing You that Your Appointment with Dr. ${doctor.doctorProfile.firstname} ${doctor.doctorProfile.lastname} has been confirmed.`,
+    };
+    transporter.sendMail(recieverp, (error, info) => {
+      if (error) {
+        return res
+          .status(500)
+          .json({ success: false, message: `Error Login.${error}` });
+      }
+    });
     // Push the notification ID into the patient's notifications array
     patient.notifications.push(patientNotification._id);
     await patient.save();
@@ -270,7 +308,7 @@ router.post('/appointments/:apid/confirm', async (req, res) => {
       seen: false,
       onClickPath: `/appointments/${apid}`,
     });
-
+    
     // Push the notification ID into the doctor's notifications array
     doctor.notifications.push(doctorNotification._id);
     await doctor.save();
@@ -315,6 +353,20 @@ router.post('/appointments/:apid/cancel', async (req, res) => {
     patient.notifications.push(patientNotification._id);
     await patient.save();
 
+    const recieverp = {
+      from: process.env.EMAIL_USER,
+      to: patient.email,
+      subject: "Patient appointment Cancelled",
+      text: `Your appointment with Dr. ${doctor.doctorProfile.firstname} ${doctor.doctorProfile.lastname} has been cancelled.`,
+    };
+    transporter.sendMail(recieverp, (error, info) => {
+      if (error) {
+        return res
+          .status(500)
+          .json({ success: false, message: `Error Login.${error}` });
+      }
+    });
+    
     // Optionally, notify the doctor about the cancellation
     const doctorNotificationMessage = `The appointment with ${patient.username} has been cancelled.`;
 
@@ -330,6 +382,20 @@ router.post('/appointments/:apid/cancel', async (req, res) => {
     doctor.notifications.push(doctorNotification._id);
     await doctor.save();
 
+
+    const recieverd = {
+      from: process.env.EMAIL_USER,
+      to: patient.email,
+      subject: "Patient appointment Cancellation",
+      text: `The appointment with ${patient.username} has been cancelled.`,
+    };
+    transporter.sendMail(recieverd, (error, info) => {
+      if (error) {
+        return res
+          .status(500)
+          .json({ success: false, message: `Error Login.${error}` });
+      }
+    });
     res.status(200).json({ message: 'Appointment cancelled and notifications sent.' });
   } catch (err) {
     console.error(err);
@@ -478,7 +544,20 @@ router.post('/completeAppointment', async (req, res) => {
     });
 
     await notification.save();
-
+    const recieverp = {
+      from: process.env.EMAIL_USER,
+      to: patient.email,
+      subject: "Patient appointment Completed",
+      text: `Your appointment with Dr. ${doctor.doctorProfile.firstname} ${doctor.doctorProfile.lastname} has been Completed.`,
+    };
+    transporter.sendMail(recieverp, (error, info) => {
+      if (error) {
+        return res
+          .status(500)
+          .json({ success: false, message: `Error Login.${error}` });
+      }
+    });
+   
     // Send the saved prescription as a response
     res.status(200).json(savedPrescription);
   } catch (err) {
@@ -509,6 +588,8 @@ router.post('/prescriptions', async (req, res) => {
       // Populate appointment details
       .exec();
     // Return the prescriptions to the client
+
+
     res.json(prescriptions);
 
   } catch (error) {
