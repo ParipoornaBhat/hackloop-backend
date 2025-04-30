@@ -62,6 +62,7 @@ router.post('/getAvailableSlots', async (req, res) => {
 
         // Generate available slots considering all appointments, even unconfirmed ones
         const availableSlots = generateAvailableSlots(workingHours, existingAppointments, selectedDate);
+        console.log("Available slots:", availableSlots); // Log available slots for debugging
         return res.status(200).json(availableSlots);  // Return available slots
         
     } catch (err) {
@@ -209,7 +210,7 @@ router.post('/bookAppointment', async (req, res) => {
       const recieverd = {
         from: process.env.EMAIL_USER,
         to: doctorUser.email,
-        subject: "Logged In",
+        subject: "New Appointmrnt Request",
         text: `You have a new appointment request from ${patient.username}.`,
       };
       transporter.sendMail(recieverd, (error, info) => {
@@ -385,7 +386,7 @@ router.post('/appointments/:apid/cancel', async (req, res) => {
 
     const recieverd = {
       from: process.env.EMAIL_USER,
-      to: patient.email,
+      to: doctor.email,
       subject: "Patient appointment Cancellation",
       text: `The appointment with ${patient.username} has been cancelled.`,
     };
@@ -518,7 +519,7 @@ router.post('/completeAppointment', async (req, res) => {
        // Add diagnosis if provided
       appointment: apid,
     });
-
+   
     const savedPrescription = await newPrescription.save();
 
     // Update the appointment with the prescription
@@ -527,7 +528,8 @@ router.post('/completeAppointment', async (req, res) => {
       { status: 'completed', prescription: savedPrescription._id },
       { new: true }
     );
-
+    const patient = await User.findById(appointment.patient);
+    const doctor = await User.findById(appointment.doctor);
     // Update the user (patient) with the prescription reference
     await User.findByIdAndUpdate(
       patientId,
@@ -548,7 +550,7 @@ router.post('/completeAppointment', async (req, res) => {
       from: process.env.EMAIL_USER,
       to: patient.email,
       subject: "Patient appointment Completed",
-      text: `Your appointment with Dr. ${doctor.doctorProfile.firstname} ${doctor.doctorProfile.lastname} has been Completed.`,
+      text: `Your appointment with Dr. ${doctor.doctorProfile.firstname} ${doctor.doctorProfile.lastname} has been Completed.And Prescription has been added.`,
     };
     transporter.sendMail(recieverp, (error, info) => {
       if (error) {
